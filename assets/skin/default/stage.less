@@ -1,0 +1,102 @@
+@background: #edf2ff;
+@border: #e9ecef;
+@cardBar: #b197fc;
+@cardBack: #fff;
+@noColor: rgba(0,0,0,0);
+
+.stage-base {
+
+    -fx-font-family:'Source Han Sans CN Normal';
+    -fx-background-color: @background;
+
+    .card {
+
+        -fx-background-color: @cardBack;
+        -fx-background-radius: 5;
+        -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 4, 0.0, 0, 3);
+
+        -fx-border-color: @border;
+        -fx-border-width: 1;
+        -fx-border-style: solid;
+        -fx-border-radius: 5;
+
+        .bar {
+            -fx-background-color: @cardBar;
+            -fx-background-radius: 0 0 5 5;
+            .label {
+                -fx-text-fill: @cardBack;
+            }
+        }
+    }
+
+    .tool {
+
+        -fx-background-color: @cardBack;
+        -fx-background-radius: 0 0 8 8;
+        -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 8, 0.0, 0, 3);
+
+        .text-field {
+
+            -fx-background-color: @noColor;
+            -fx-border-color: @cardBar;
+            -fx-border-width: 0.5;
+            -fx-border-style: solid;
+            -fx-border-radius: 99;
+
+        }
+
+        .button {
+
+            -fx-background-color: @noColor;
+            -fx-text-fill: @cardBar;
+
+            &:hover {
+                 -fx-effect: dropshadow(three-pass-box, @cardBar, 12, 0.0, 0, 0);
+            }
+
+        }
+
+    }
+
+    .rec-button {
+
+        -fx-background-color: @cardBack;
+        -fx-background-radius: 999;
+        -fx-text-fill: @cardBar;
+        -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 6, 0.0, 0, 0);
+
+        &:hover {
+            -fx-effect: dropshadow(three-pass-box, @cardBar, 12, 0.0, 0, 0);
+        }
+
+    }
+
+    .combo-box {
+      -fx-background-color: @cardBack;
+      -fx-effect: dropshadow(three-pass-box,@cardBar, 6, 0, 0, 0);
+      .list-cell {
+        -fx-text-fill: @cardBar;
+      }
+      .arrow {
+        -fx-background-color: @cardBar;
+      }
+      .combo-box-popup {
+        .list-view {
+          .list-cell {
+            -fx-text-fill: @cardBar;
+            -fx-background-color: @cardBack;
+            &:selected {
+              -fx-text-fill: @cardBack;
+              -fx-background-color: @cardBar;
+            }
+            &:hover {
+              -fx-text-fill: @cardBack;
+              -fx-background-color: @cardBar;
+            }
+          }
+        }
+      }
+    }
+
+
+}

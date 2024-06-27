@@ -1,0 +1,70 @@
+.stage-base {
+  -fx-font-family: 'Source Han Sans CN Normal';
+  -fx-background-color: #edf2ff;
+}
+.stage-base .card {
+  -fx-background-color: #ffffff;
+  -fx-background-radius: 5;
+  -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 4, 0, 0, 3);
+  -fx-border-color: #e9ecef;
+  -fx-border-width: 1;
+  -fx-border-style: solid;
+  -fx-border-radius: 5;
+}
+.stage-base .card .bar {
+  -fx-background-color: #b197fc;
+  -fx-background-radius: 0 0 5 5;
+}
+.stage-base .card .bar .label {
+  -fx-text-fill: #ffffff;
+}
+.stage-base .tool {
+  -fx-background-color: #ffffff;
+  -fx-background-radius: 0 0 8 8;
+  -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 8, 0, 0, 3);
+}
+.stage-base .tool .text-field {
+  -fx-background-color: rgba(0, 0, 0, 0);
+  -fx-border-color: #b197fc;
+  -fx-border-width: 0.5;
+  -fx-border-style: solid;
+  -fx-border-radius: 99;
+}
+.stage-base .tool .button {
+  -fx-background-color: rgba(0, 0, 0, 0);
+  -fx-text-fill: #b197fc;
+}
+.stage-base .tool .button:hover {
+  -fx-effect: dropshadow(three-pass-box, #b197fc, 12, 0, 0, 0);
+}
+.stage-base .rec-button {
+  -fx-background-color: #ffffff;
+  -fx-background-radius: 999;
+  -fx-text-fill: #b197fc;
+  -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 6, 0, 0, 0);
+}
+.stage-base .rec-button:hover {
+  -fx-effect: dropshadow(three-pass-box, #b197fc, 12, 0, 0, 0);
+}
+.stage-base .combo-box {
+  -fx-background-color: #ffffff;
+  -fx-effect: dropshadow(three-pass-box, #b197fc, 6, 0, 0, 0);
+}
+.stage-base .combo-box .list-cell {
+  -fx-text-fill: #b197fc;
+}
+.stage-base .combo-box .arrow {
+  -fx-background-color: #b197fc;
+}
+.stage-base .combo-box .combo-box-popup .list-view .list-cell {
+  -fx-text-fill: #b197fc;
+  -fx-background-color: #ffffff;
+}
+.stage-base .combo-box .combo-box-popup .list-view .list-cell:selected {
+  -fx-text-fill: #ffffff;
+  -fx-background-color: #b197fc;
+}
+.stage-base .combo-box .combo-box-popup .list-view .list-cell:hover {
+  -fx-text-fill: #ffffff;
+  -fx-background-color: #b197fc;
+}
