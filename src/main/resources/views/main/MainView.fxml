@@ -19,11 +19,11 @@
             <Insets left="26.0" right="26.0" />
          </BorderPane.margin>
          <children>
-            <TextField prefHeight="30.0" prefWidth="150.0" />
+            <TextField fx:id="txtFileName" prefHeight="30.0" prefWidth="150.0" />
             <HBox alignment="CENTER_RIGHT" prefHeight="100.0" prefWidth="200.0" spacing="4.0" HBox.hgrow="ALWAYS">
                <children>
                   <Button id="btnList" minHeight="36.0" minWidth="36.0" mnemonicParsing="false" prefHeight="36.0" prefWidth="36.0" text="Button" />
-                  <Button id="btnSetting" minHeight="36.0" minWidth="36.0" mnemonicParsing="false" prefHeight="36.0" prefWidth="36.0" text="Button" />
+                  <Button id="btnSetting" minHeight="36.0" minWidth="36.0" mnemonicParsing="false" onAction="#showConfigView" prefHeight="36.0" prefWidth="36.0" text="Button" />
                </children>
             </HBox>
          </children>

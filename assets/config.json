@@ -1,4 +1,5 @@
 {
   "theme": "default",
-  "language": "unavailable"
+  "language": "unavailable",
+  "video-folder": "assets/records"
 }

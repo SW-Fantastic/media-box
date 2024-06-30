@@ -1,8 +1,11 @@
 package org.swdc.recorder;
 
 import org.swdc.config.annotations.ConfigureSource;
+import org.swdc.config.annotations.Property;
 import org.swdc.config.configs.JsonConfigHandler;
 import org.swdc.fx.config.ApplicationConfig;
+import org.swdc.fx.config.PropEditor;
+import org.swdc.fx.config.editors.ExternalFolderSelectEditor;
 
 /**
  * 这是应用程序的配置类。
@@ -36,4 +39,21 @@ import org.swdc.fx.config.ApplicationConfig;
  */
 @ConfigureSource(value = "assets/config.json", handler = JsonConfigHandler.class)
 public class RecorderConfiguration extends ApplicationConfig {
+
+    @Property("video-folder")
+    @PropEditor(
+            name = "存储目录",
+            description = "录制的结果会存放的位置。",
+            editor = ExternalFolderSelectEditor.class
+    )
+    private String videoFolder;
+
+    public String getVideoFolder() {
+        return videoFolder;
+    }
+
+    public void setVideoFolder(String videoFolder) {
+        this.videoFolder = videoFolder;
+    }
+
 }

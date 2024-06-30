@@ -4,20 +4,14 @@ import org.bytedeco.ffmpeg.avformat.AVFormatContext;
 import org.bytedeco.ffmpeg.avformat.AVInputFormat;
 import org.bytedeco.ffmpeg.avformat.AVStream;
 import org.bytedeco.ffmpeg.avutil.AVDictionary;
-import org.bytedeco.ffmpeg.avutil.Callback_Pointer_int_String_Pointer;
-import org.bytedeco.ffmpeg.avutil.LogCallback;
 import org.bytedeco.ffmpeg.global.avdevice;
 import org.bytedeco.ffmpeg.global.avformat;
 import org.bytedeco.ffmpeg.global.avutil;
-import org.bytedeco.javacpp.BytePointer;
-import org.bytedeco.javacpp.CharPointer;
-import org.bytedeco.javacpp.Pointer;
 import org.swdc.recorder.core.FFLogCallback;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class FFMpegUtils {
 

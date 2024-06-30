@@ -240,14 +240,11 @@ public class FFVideoRecorder implements AutoCloseable {
 
         this.state = RecorderState.RECORDING;
 
-        AtomicLong lastFrameTime = new AtomicLong(0);
-        AtomicLong frameTimeDelta = new AtomicLong(0);
 
         AtomicLong count = new AtomicLong(0);
 
-
-        // 微秒的时间基，是秒到微秒的进率的倒数，也就是一秒包含多少微秒
-        AVRational microsecTimebase = avutil.av_make_q(1,1000000);
+        AtomicLong ptsLast = new AtomicLong(0);
+        AtomicLong ptsDelta = new AtomicLong(0);
 
         // 初始化一个音视频数据包
         AVPacket packet = avcodec.av_packet_alloc();
@@ -275,28 +272,25 @@ public class FFVideoRecorder implements AutoCloseable {
                 decoder.decodePacket(packet, frame -> {
 
                     // 计算时间差值
-                    if (lastFrameTime.get() == 0) {
-                        // 初始化帧的时间
-                        lastFrameTime.set(avutil.av_gettime());
+                    if (ptsLast.get() == 0) {
+                        ptsLast.set(frame.pts());
                     } else {
-                        // 计算差值
-                        long next = avutil.av_gettime();
-                        frameTimeDelta.set(next - lastFrameTime.get());
-                        lastFrameTime.set(next);
+                        ptsDelta.set(frame.pts() - ptsLast.get());
+                        ptsLast.set(frame.pts());
                     }
 
                     // 解码完毕，开始转码，这一步的目的是将输入格式转码为输出的格式
                     AVFrame out = swsContext.scale(frame);
 
-                    // 把视频帧的时间差从微秒的时间基转换为编码器的时间基。
-                    long rescaleEncoded = avutil.av_rescale_q(
-                            frameTimeDelta.get(),microsecTimebase,encoder.timeBase()
+                    // 把视频帧的时间差从视频流的时间基转换为编码器的时间基。
+                    long rescaledPts = avutil.av_rescale_q(
+                            ptsDelta.get(),sourceVideoSteam.time_base(),encoder.timeBase()
                     );
 
                     // 使用累加器和本时间差作为PTS。
-                    out.pts(count.get() + rescaleEncoded);
+                    out.pts(count.get() + rescaledPts);
                     // 更新累加器。
-                    count.set(count.get() + rescaleEncoded);
+                    count.set(count.get() + rescaledPts);
                     // 转码完毕，开始编码，这一步的目的是将转码后的数据进行编码以便输出到文件。
                     encoder.encodeFrame(out, encoded -> {
                         if (state == RecorderState.STOPPED) {

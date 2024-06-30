@@ -31,6 +31,7 @@ module recorder {
             swdc.application.dependency,
             swdc.application.fx,
             swdc.application.configs,
+            org.controlsfx.controls,
             javafx.graphics,
             javafx.controls;
 

@@ -20,8 +20,6 @@ public class FFSwrContext implements AutoCloseable {
 
     private AVFrame swrFrame;
 
-    private AVFrame resultFrame;
-
     private AVCodecParameters parameters;
 
     public FFSwrContext(SwrContext context, AVCodecParameters parameters, AVAudioFifo fifo, int frameSize) {
@@ -31,9 +29,8 @@ public class FFSwrContext implements AutoCloseable {
         this.frameSize = frameSize;
         this.parameters = parameters;
         this.swrFrame = avutil.av_frame_alloc();
-        this.resultFrame = avutil.av_frame_alloc();
 
-        resetFrame(resultFrame, frameSize);
+        resetFrame(swrFrame, frameSize);
 
     }
 
@@ -74,7 +71,7 @@ public class FFSwrContext implements AutoCloseable {
 
         if (avutil.av_audio_fifo_size(audioFifo) < frameSize) {
 
-            state = avutil.av_audio_fifo_realloc(audioFifo,avutil.av_audio_fifo_size(audioFifo) + input.nb_samples());
+            state = avutil.av_audio_fifo_realloc(audioFifo,avutil.av_audio_fifo_size(audioFifo) + swrFrame.nb_samples());
             if (state < 0) {
                 throw FFMpegUtils.createException(state);
             }
@@ -87,10 +84,10 @@ public class FFSwrContext implements AutoCloseable {
 
         while (avutil.av_audio_fifo_size(audioFifo) >= frameSize) {
 
-            resetFrame(resultFrame, frameSize);
+            resetFrame(swrFrame, frameSize);
             state = avutil.av_audio_fifo_read(
                     audioFifo,
-                    resultFrame.data(),
+                    swrFrame.data(),
                     frameSize
             );
 
@@ -98,7 +95,7 @@ public class FFSwrContext implements AutoCloseable {
                 throw FFMpegUtils.createException(state);
             }
 
-            callback.accept(resultFrame);
+            callback.accept(swrFrame);
 
         }
 
@@ -120,10 +117,6 @@ public class FFSwrContext implements AutoCloseable {
         if (swrFrame != null && !swrFrame.isNull()) {
             avutil.av_frame_free(swrFrame);
             swrFrame = null;
-        }
-        if (resultFrame != null && !resultFrame.isNull()) {
-            avutil.av_frame_free(resultFrame);
-            resultFrame = null;
         }
         if (audioFifo != null && !audioFifo.isNull()) {
             avutil.av_audio_fifo_free(audioFifo);

@@ -37,7 +37,7 @@ public class FFMpegEncoder implements AutoCloseable {
 
         if (codecId == avcodec.AV_CODEC_ID_H264) {
             avutil.av_opt_set(context.priv_data(),"b-pyramid", "none",0);
-            avutil.av_opt_set(context.priv_data(),"preset", "superfast",0);
+            avutil.av_opt_set(context.priv_data(),"preset", "slower",0);
             avutil.av_opt_set(context.priv_data(),"tune", "zerolatency",0);
         }
 
@@ -82,14 +82,9 @@ public class FFMpegEncoder implements AutoCloseable {
 
         if (changeable()) {
 
-            AVRational rational = new AVRational();
-            rational.num(num);
-            rational.den(den);
-
-            context.time_base(rational);
+            context.time_base(avutil.av_make_q(num,den));
 
             return this;
-
         }
 
         throw new RuntimeException("failed to init encoder");
@@ -471,24 +466,10 @@ public class FFMpegEncoder implements AutoCloseable {
         swsFrame.height(context.height());
         swsFrame.format(context.pix_fmt());
 
-        BytePointer buffer =  new BytePointer(
-                avutil.av_malloc(getSwBufferSize())
-        );
-
-
-
-        avutil.av_image_fill_arrays(
-                swsFrame.data(),
-                swsFrame.linesize(),
-                buffer,
-                context.pix_fmt(),
-                context.width(),
-                context.height(),
-                1
-        );
-
-        swsFrame.width(context.width());
-        swsFrame.height(context.height());
+        int state = avutil.av_frame_get_buffer(swsFrame,1);
+        if (state < 0) {
+            return null;
+        }
 
         VideoPixFormat inputFormat = input.pixFormat();
         if (inputFormat == VideoPixFormat.none) {
@@ -509,7 +490,7 @@ public class FFMpegEncoder implements AutoCloseable {
         if (swsContext == null) {
             return null;
         }
-        return new FFSwsContext(this,buffer,swsContext,swsFrame);
+        return new FFSwsContext(this,swsContext,swsFrame);
 
     }
 
@@ -527,40 +508,6 @@ public class FFMpegEncoder implements AutoCloseable {
         return context.height();
     }
 
-
-    public int getSwBufferSize() {
-
-        if (!ready()) {
-            return 0;
-        }
-
-        int codecType = context.codec_type();
-        MediaType type = MediaType.valueOf(codecType);
-        if (type == MediaType.MediaTypeVideo) {
-
-            return avutil.av_image_get_buffer_size(
-                    context.pix_fmt(),
-                    context.width(),
-                    context.height(),
-                    1
-            );
-
-
-        } else if (type == MediaType.MediaTypeAudio) {
-
-            return avutil.av_samples_get_buffer_size(
-                    (IntPointer) null,
-                    context.ch_layout().nb_channels(),
-                    context.frame_size(),
-                    context.sample_fmt(),
-                    1
-            );
-
-
-        }
-
-        return 0;
-    }
 
     /**
      * 关闭对象，释放资源。

@@ -20,18 +20,22 @@ public class RecordOutputFormat {
 
     private String name;
 
-    RecordOutputFormat(String name, VideoPixFormat format, VideoCodecs codecs) {
+    private String extension;
+
+    RecordOutputFormat(String name, VideoPixFormat format, VideoCodecs codecs, String extension) {
         this.name = name;
         this.pixFormat = format;
         this.mediaType = MediaType.MediaTypeVideo;
         this.videoCodecs = codecs;
+        this.extension = extension;
     }
 
-    RecordOutputFormat(String name, AudioSampleFormat sampleFormat, AudioCodecs codecs) {
+    RecordOutputFormat(String name, AudioSampleFormat sampleFormat, AudioCodecs codecs, String extension) {
         this.name = name;
         this.sampleFormat = sampleFormat;
         this.mediaType = MediaType.MediaTypeAudio;
         this.audioCodecs = codecs;
+        this.extension = extension;
     }
 
     public AudioSampleFormat getSampleFormat() {
@@ -82,6 +86,14 @@ public class RecordOutputFormat {
         this.audioCodecs = audioCodecs;
     }
 
+    public String getExtension() {
+        return extension;
+    }
+
+    public void setExtension(String extension) {
+        this.extension = extension;
+    }
+
     @Override
     public String toString() {
         return name;
@@ -90,11 +102,11 @@ public class RecordOutputFormat {
     public static List<RecordOutputFormat> outputFormats(MediaType type) {
         return switch (type) {
             case MediaTypeVideo -> Arrays.asList(
-                    new RecordOutputFormat("Mp4 H.264", VideoPixFormat.yuv420p, VideoCodecs.h264)
+                    new RecordOutputFormat("Mp4 H.264", VideoPixFormat.yuv420p, VideoCodecs.h264,"mp4")
             );
             case MediaTypeAudio -> Arrays.asList(
-                    new RecordOutputFormat("AAC", AudioSampleFormat.fltp, AudioCodecs.aac),
-                    new RecordOutputFormat("MP3", AudioSampleFormat.s16p, AudioCodecs.mp3)
+                    new RecordOutputFormat("AAC", AudioSampleFormat.fltp, AudioCodecs.aac,"aac"),
+                    new RecordOutputFormat("MP3", AudioSampleFormat.s16p, AudioCodecs.mp3,"mp3")
             );
             default -> Collections.emptyList();
         };

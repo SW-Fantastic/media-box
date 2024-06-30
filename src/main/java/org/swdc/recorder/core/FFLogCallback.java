@@ -27,13 +27,13 @@ public class FFLogCallback extends LogCallback {
 
     private boolean parseDevice;
 
-    private FFLogCallback() {
-
-    }
-
     private static Logger logger = LoggerFactory.getLogger(avutil.class);
 
     private List<String> buffer = new ArrayList<>();
+
+    private FFLogCallback() {
+
+    }
 
     public void parseDeviceList(boolean parseDevice) {
         this.parseDevice = parseDevice;

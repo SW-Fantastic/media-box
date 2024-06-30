@@ -8,7 +8,6 @@ import org.bytedeco.javacpp.BytePointer;
 
 public class FFSwsContext implements AutoCloseable {
 
-    private BytePointer buffer;
 
     private SwsContext context;
 
@@ -16,8 +15,7 @@ public class FFSwsContext implements AutoCloseable {
 
     private FFMpegEncoder encoder;
 
-    public FFSwsContext(FFMpegEncoder encoder, BytePointer buffer, SwsContext context, AVFrame frame) {
-        this.buffer = buffer;
+    public FFSwsContext(FFMpegEncoder encoder,SwsContext context, AVFrame frame) {
         this.context = context;
         this.frame = frame;
         this.encoder = encoder;
@@ -49,7 +47,6 @@ public class FFSwsContext implements AutoCloseable {
 
     public boolean ready() {
         return context != null && !context.isNull() &&
-                buffer != null && !buffer.isNull() &&
                 frame != null && !frame.isNull();
     }
 
@@ -60,11 +57,8 @@ public class FFSwsContext implements AutoCloseable {
             swscale.sws_freeContext(context);
             context = null;
         }
-        if (buffer != null && !buffer.isNull()) {
-            avutil.av_free(buffer);
-            buffer = null;
-        }
         if (frame != null && !frame.isNull()) {
+            avutil.av_frame_unref(frame);
             avutil.av_frame_free(frame);
             frame = null;
         }

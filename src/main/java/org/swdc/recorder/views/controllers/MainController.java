@@ -7,15 +7,18 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.TextField;
 import org.slf4j.Logger;
 import org.swdc.fx.font.FontSize;
 import org.swdc.fx.font.Fontawsome5Service;
 import org.swdc.fx.view.ViewController;
+import org.swdc.recorder.RecorderConfiguration;
 import org.swdc.recorder.core.*;
 import org.swdc.recorder.core.ffmpeg.FFMpegUtils;
 import org.swdc.recorder.core.ffmpeg.FFOutputTarget;
 import org.swdc.recorder.core.ffmpeg.FFRecordSource;
 import org.swdc.recorder.core.ffmpeg.MediaType;
+import org.swdc.recorder.views.ConfigView;
 import org.swdc.recorder.views.MainView;
 
 import java.io.File;
@@ -64,6 +67,15 @@ public class MainController extends ViewController<MainView> {
     @FXML
     private Button recButton;
 
+    @FXML
+    private TextField txtFileName;
+
+    @Inject
+    private ConfigView configView;
+
+    @Inject
+    private RecorderConfiguration configuration;
+
     @Inject
     private DesktopRecorder recorder = null;
 
@@ -101,6 +113,7 @@ public class MainController extends ViewController<MainView> {
         );
         cbxVideoOut.getSelectionModel().select(0);
 
+        txtFileName.setText("录制-" + System.currentTimeMillis());
         setRecIcon("play");
     }
 
@@ -111,48 +124,55 @@ public class MainController extends ViewController<MainView> {
     }
 
     @FXML
+    public void showConfigView() {
+
+        configView.show();
+
+    }
+
+    @FXML
     public void onRecClicked() {
 
         if (recorder.isRecording()) {
             recorder.stop();
             setRecIcon("play");
+            txtFileName.setEditable(true);
         } else {
 
             RecordVideoQuality videoQuality = cbxBitrate.getSelectionModel().getSelectedItem();
             RecordOutputFormat videoOutFormat = cbxVideoOut.getSelectionModel().getSelectedItem();
-            if (videoQuality == null || videoOutFormat == null) {
-                return;
-            }
 
             RecordAudioQuality audioQuality = cbxSamplerate.getSelectionModel().getSelectedItem();
             RecordOutputFormat audioOutFormat = cbxAudioOut.getSelectionModel().getSelectedItem();
-            if (audioQuality == null || audioOutFormat == null) {
-                return;
-            }
 
             FFLogCallback callback = FFLogCallback.getLogger();
             callback.parseDeviceList(false);
 
             FFRecordSource audio = cbxAudioSource.getSelectionModel().getSelectedItem();
             FFRecordSource video = cbxVideoSource.getSelectionModel().getSelectedItem();
-            if (audio == null || video == null) {
-                return;
+
+            recorder.setTarget(new File(configuration.getVideoFolder()).getAbsoluteFile(), txtFileName.getText());
+            if (audio != null && audioQuality != null && audioOutFormat != null) {
+                recorder.setAudioOutput(audioOutFormat);
+                recorder.setAudioQuality(audioQuality);
+                recorder.setAudioSource(audio);
             }
 
-            FFOutputTarget target = new FFOutputTarget(new File("test.mp4"));
-            recorder.setTarget(target);
-            recorder.setAudioOutput(audioOutFormat);
-            recorder.setAudioQuality(audioQuality);
-            recorder.setVideoOutput(videoOutFormat);
-            recorder.setVideoQuality(videoQuality);
-            recorder.setAudioSource(audio);
-            recorder.setVideoSource(video);
-
-            if (!recorder.start()) {
-                // failed to start
-            } else {
-                setRecIcon("stop");
+            if (video != null && videoQuality != null && videoOutFormat != null) {
+                recorder.setVideoOutput(videoOutFormat);
+                recorder.setVideoQuality(videoQuality);
+                recorder.setVideoSource(video);
             }
+
+            if (recorder.canRecordAudio() || recorder.canRecordVideo()) {
+                if (!recorder.start()) {
+                    // failed to start
+                } else {
+                    setRecIcon("stop");
+                    txtFileName.setEditable(false);
+                }
+            }
+
         }
 
     }
