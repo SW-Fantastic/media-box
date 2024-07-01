@@ -5,7 +5,7 @@
 .stage-base .card {
   -fx-background-color: #ffffff;
   -fx-background-radius: 5;
-  -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 4, 0, 0, 3);
+  -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 6, 0, 0, 0);
   -fx-border-color: #e9ecef;
   -fx-border-width: 1;
   -fx-border-style: solid;
@@ -67,4 +67,25 @@
 .stage-base .combo-box .combo-box-popup .list-view .list-cell:hover {
   -fx-text-fill: #ffffff;
   -fx-background-color: #b197fc;
+}
+.stage-base .prop-sheets {
+  -fx-background: #edf2ff;
+}
+.stage-base .prop-sheets .button {
+  -fx-background-color: #b197fc;
+  -fx-text-fill: #ffffff;
+}
+.stage-base .prop-sheets .button:hover {
+  -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 8, 0, 0, 0);
+}
+.stage-base .prop-sheets .text-field {
+  -fx-background-color: #ffffff;
+  -fx-effect: dropshadow(three-pass-box, #b197fc, 8, 0, 0, 0);
+}
+.stage-base .primary-button {
+  -fx-background-color: #b197fc;
+  -fx-text-fill: #ffffff;
+}
+.stage-base .primary-button:hover {
+  -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 8, 0, 0, 0);
 }

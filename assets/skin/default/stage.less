@@ -13,7 +13,7 @@
 
         -fx-background-color: @cardBack;
         -fx-background-radius: 5;
-        -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 4, 0.0, 0, 3);
+        -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 6, 0.0, 0, 0);
 
         -fx-border-color: @border;
         -fx-border-width: 1;
@@ -98,5 +98,27 @@
       }
     }
 
+    .prop-sheets {
+        -fx-background: @background;
+        .button {
+            -fx-background-color: @cardBar;
+            -fx-text-fill: @cardBack;
+            &:hover {
+                -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 8, 0.0, 0, 0);
+            }
+        }
+        .text-field {
+            -fx-background-color: @cardBack;
+            -fx-effect: dropshadow(three-pass-box, @cardBar, 8, 0.0, 0, 0);
+        }
+    }
+
+    .primary-button {
+        -fx-background-color: @cardBar;
+        -fx-text-fill: @cardBack;
+        &:hover {
+            -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 8, 0.0, 0, 0);
+        }
+    }
 
 }

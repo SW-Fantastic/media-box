@@ -3,7 +3,9 @@ package org.swdc.recorder;
 import org.swdc.dependency.DependencyContext;
 import org.swdc.dependency.EnvironmentLoader;
 import org.swdc.fx.FXApplication;
+import org.swdc.fx.FXResources;
 import org.swdc.fx.SWFXApplication;
+import org.swdc.platforms.NativePlatform;
 import org.swdc.recorder.core.DesktopRecorder;
 import org.swdc.recorder.views.MainView;
 
@@ -56,6 +58,8 @@ public class RecorderApplication extends FXApplication {
      */
     @Override
     public void onStarted(DependencyContext dependencyContext) {
+        FXResources resources = dependencyContext.getByClass(FXResources.class);
+        NativePlatform.initializePlatform(resources.getAssetsFolder());
         dependencyContext.getByClass(MainView.class).show();
     }
 

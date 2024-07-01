@@ -1,6 +1,7 @@
 package org.swdc.recorder.views.controllers;
 
 import jakarta.inject.Inject;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -23,6 +24,7 @@ import org.swdc.recorder.views.MainView;
 
 import java.io.File;
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
 
 /**
@@ -82,39 +84,9 @@ public class MainController extends ViewController<MainView> {
     @Override
     protected void viewReady(URL url, ResourceBundle resourceBundle) {
 
-        cbxAudioSource.getItems().addAll(
-                FFMpegUtils.getAudioSources()
-        );
-
-        cbxAudioSource.getSelectionModel().select(0);
-
-        cbxVideoSource.getItems().addAll(
-                FFMpegUtils.getVideoSources()
-        );
-        cbxVideoSource.getSelectionModel().select(0);
-
-        cbxBitrate.getItems().addAll(
-                RecordVideoQuality.videoQualities()
-        );
-        cbxBitrate.getSelectionModel().select(0);
-
-        cbxSamplerate.getItems().addAll(
-                RecordAudioQuality.audioQualities()
-        );
-        cbxSamplerate.getSelectionModel().select(0);
-
-        cbxAudioOut.getItems().addAll(
-                RecordOutputFormat.outputFormats(MediaType.MediaTypeAudio)
-        );
-        cbxAudioOut.getSelectionModel().select(0);
-
-        cbxVideoOut.getItems().addAll(
-                RecordOutputFormat.outputFormats(MediaType.MediaTypeVideo)
-        );
-        cbxVideoOut.getSelectionModel().select(0);
-
         txtFileName.setText("录制-" + System.currentTimeMillis());
         setRecIcon("play");
+        refreshDevices();
     }
 
     private void setRecIcon(String icon) {
@@ -175,6 +147,49 @@ public class MainController extends ViewController<MainView> {
 
         }
 
+    }
+
+    public void refreshDevices() {
+
+        ObservableList<FFRecordSource> audioSourceItems = cbxAudioSource.getItems();
+        audioSourceItems.clear();
+        audioSourceItems.addAll(
+                FFMpegUtils.getAudioSources()
+        );
+        cbxAudioSource.getSelectionModel().select(0);
+
+        ObservableList<FFRecordSource> videoSourceItems = cbxVideoSource.getItems();
+        videoSourceItems.clear();
+        videoSourceItems.addAll(
+                FFMpegUtils.getVideoSources()
+        );
+        cbxVideoSource.getSelectionModel().select(0);
+
+        ObservableList<RecordVideoQuality> videoQualities = cbxBitrate.getItems();
+        videoQualities.clear();
+        videoQualities.addAll(RecordVideoQuality.videoQualities());
+        cbxBitrate.getSelectionModel().select(0);
+
+        ObservableList<RecordAudioQuality> audioQualities = cbxSamplerate.getItems();
+        audioQualities.clear();
+        audioQualities.addAll(
+                RecordAudioQuality.audioQualities()
+        );
+        cbxSamplerate.getSelectionModel().select(0);
+
+        ObservableList<RecordOutputFormat> audioOuts = cbxAudioOut.getItems();
+        audioOuts.clear();
+        audioOuts.addAll(
+                RecordOutputFormat.outputFormats(MediaType.MediaTypeAudio)
+        );
+        cbxAudioOut.getSelectionModel().select(0);
+
+        ObservableList<RecordOutputFormat> videoOuts = cbxVideoOut.getItems();
+        videoOuts.clear();
+        videoOuts.addAll(
+                RecordOutputFormat.outputFormats(MediaType.MediaTypeVideo)
+        );
+        cbxVideoOut.getSelectionModel().select(0);
     }
 
 }

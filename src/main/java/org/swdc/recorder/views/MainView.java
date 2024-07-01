@@ -12,6 +12,7 @@ import org.swdc.fx.font.FontSize;
 import org.swdc.fx.font.Fontawsome5Service;
 import org.swdc.fx.view.AbstractView;
 import org.swdc.fx.view.View;
+import org.swdc.recorder.views.controllers.MainController;
 
 
 @View(
@@ -46,5 +47,11 @@ public class MainView extends AbstractView {
     }
 
 
+    public void refreshDevices() {
+
+        MainController controller = getController();
+        controller.refreshDevices();
+
+    }
 
 }
