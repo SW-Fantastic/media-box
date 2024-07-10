@@ -10,8 +10,8 @@ import org.bytedeco.ffmpeg.avutil.*;
 import org.bytedeco.ffmpeg.global.*;
 import org.bytedeco.ffmpeg.swresample.SwrContext;
 import org.bytedeco.ffmpeg.swscale.SwsContext;
-import org.bytedeco.javacpp.BytePointer;
-import org.bytedeco.javacpp.IntPointer;
+import org.swdc.recorder.core.ffmpeg.convert.FFSwrContext;
+import org.swdc.recorder.core.ffmpeg.convert.FFSwsContext;
 
 import java.nio.DoubleBuffer;
 import java.util.function.Consumer;
@@ -222,6 +222,23 @@ public class FFMpegEncoder implements AutoCloseable {
         throw new RuntimeException("failed to init encoder");
     }
 
+    public AudioSampleFormat sampleFormat() {
+
+        if (!ready()) {
+            return null;
+        }
+
+        return AudioSampleFormat.valueOf(context.sample_fmt());
+
+    }
+
+    public AVChannelLayout channelLayout() {
+        if (ready()) {
+            return context.ch_layout();
+        }
+        return null;
+    }
+
     /**
      * 音频编码参数：
      * 音频通道布局
@@ -251,6 +268,14 @@ public class FFMpegEncoder implements AutoCloseable {
         }
         throw new RuntimeException("failed to init encoder");
 
+    }
+
+    public int channels() {
+
+        if (ready()) {
+            return context.ch_layout().nb_channels();
+        }
+        return 0;
     }
 
     /**

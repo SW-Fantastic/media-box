@@ -1,6 +1,7 @@
-package org.swdc.recorder.core.ffmpeg;
+package org.swdc.recorder.core.ffmpeg.source;
 
 import org.bytedeco.ffmpeg.avformat.AVInputFormat;
+import org.swdc.recorder.core.ffmpeg.MediaType;
 
 public class FFRecordSource {
 

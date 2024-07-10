@@ -1,7 +1,16 @@
 package org.swdc.recorder.core;
 
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import org.bytedeco.ffmpeg.avcodec.AVCodecParameters;
+import org.bytedeco.ffmpeg.avutil.AVChannelLayout;
+import org.bytedeco.ffmpeg.global.avcodec;
+import org.bytedeco.ffmpeg.global.avutil;
+import org.bytedeco.javacpp.IntPointer;
+import org.slf4j.Logger;
 import org.swdc.recorder.core.ffmpeg.*;
+import org.swdc.recorder.core.ffmpeg.convert.FFAudioMixer;
+import org.swdc.recorder.core.ffmpeg.source.FFRecordSource;
 
 import java.io.File;
 import java.util.HashMap;
@@ -14,9 +23,16 @@ import java.util.concurrent.TimeUnit;
 @Singleton
 public class DesktopRecorder {
 
+    @Inject
+    private Logger logger;
+
     private FFAudioRecorder audioRecorder;
 
     private FFVideoRecorder videoRecorder;
+
+    private AVCodecParameters mixParameter;
+
+    private FFAudioMixer audioMixer;
 
     private FFOutputTarget target;
 
@@ -32,8 +48,10 @@ public class DesktopRecorder {
 
     public DesktopRecorder() {
 
+        audioMixer = new FFAudioMixer();
         audioRecorder = new FFAudioRecorder();
         videoRecorder = new FFVideoRecorder();
+        mixParameter = avcodec.avcodec_parameters_alloc();
 
     }
 
@@ -52,9 +70,22 @@ public class DesktopRecorder {
     }
 
     public void setAudioOutput(RecordOutputFormat format) {
+
         audioRecorder.setAudioCodecs(format.getAudioCodecs());
         audioRecorder.setSampleFormat(format.getSampleFormat());
+
+        AVChannelLayout layout = new AVChannelLayout();
+        int state = avutil.av_channel_layout_from_mask(
+                layout,AudioChannelLayout.layoutStereo.getFfmpegChannelLayout()
+        );
+        if (state < 0) {
+            throw FFMpegUtils.createException(state);
+        }
+        mixParameter.format(format.getSampleFormat().getFfmpegFormatId());
+        mixParameter.ch_layout(layout);
+
         outputFormats.put(MediaType.MediaTypeAudio,format);
+
     }
 
     public void setVideoOutput(RecordOutputFormat format) {
@@ -68,6 +99,7 @@ public class DesktopRecorder {
     }
 
     public void setAudioQuality(RecordAudioQuality quality) {
+        mixParameter.sample_rate(quality.getSampleRate());
         audioRecorder.setSampleRate(quality.getSampleRate());
     }
 
@@ -81,6 +113,20 @@ public class DesktopRecorder {
             return true;
         }
 
+
+
+        int numberOfSamples = avutil.av_samples_get_buffer_size(
+                (IntPointer) null,
+                mixParameter.ch_layout().nb_channels(),
+                1,
+                mixParameter.format(),
+                1
+        );
+        mixParameter.frame_size(numberOfSamples);
+
+        audioMixer.close();
+        audioMixer.configure(mixParameter);
+
         boolean doRecAudio = canRecordAudio();
         boolean doRecVideo = canRecordVideo();
 
@@ -91,6 +137,7 @@ public class DesktopRecorder {
 
         if (doRecAudio) {
             latchCount ++;
+            audioRecorder.setMixer(audioMixer);
             audioRecorder.setTarget(target);
         }
 

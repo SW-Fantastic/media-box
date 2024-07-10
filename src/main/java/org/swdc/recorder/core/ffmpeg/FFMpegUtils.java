@@ -8,6 +8,7 @@ import org.bytedeco.ffmpeg.global.avdevice;
 import org.bytedeco.ffmpeg.global.avformat;
 import org.bytedeco.ffmpeg.global.avutil;
 import org.swdc.recorder.core.FFLogCallback;
+import org.swdc.recorder.core.ffmpeg.source.FFRecordSource;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;

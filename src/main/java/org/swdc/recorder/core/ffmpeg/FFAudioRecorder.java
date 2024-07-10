@@ -1,16 +1,18 @@
 package org.swdc.recorder.core.ffmpeg;
 
 import org.bytedeco.ffmpeg.avcodec.AVPacket;
-import org.bytedeco.ffmpeg.avformat.AVFormatContext;
-import org.bytedeco.ffmpeg.avformat.AVInputFormat;
 import org.bytedeco.ffmpeg.avformat.AVStream;
 import org.bytedeco.ffmpeg.avutil.AVChannelLayout;
-import org.bytedeco.ffmpeg.avutil.AVDictionary;
+import org.bytedeco.ffmpeg.avutil.AVFrame;
 import org.bytedeco.ffmpeg.global.avcodec;
+import org.bytedeco.ffmpeg.global.avfilter;
 import org.bytedeco.ffmpeg.global.avformat;
 import org.bytedeco.ffmpeg.global.avutil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.swdc.recorder.core.ffmpeg.convert.*;
+import org.swdc.recorder.core.ffmpeg.source.FFAudioSourceContext;
+import org.swdc.recorder.core.ffmpeg.source.FFRecordSource;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
@@ -26,14 +28,15 @@ public class FFAudioRecorder implements AutoCloseable {
     private int sampleRate = 48000;
 
     private AudioSampleFormat sampleFormat;
+
     private AudioChannelLayout channelLayout = AudioChannelLayout.layoutStereo;
 
-    private AVInputFormat sourceFormat;
-    private AVFormatContext sourceFormatCtx;
-    private AVStream sourceAudioSteam;
+    private FFAudioSourceContext sourceContext;
 
     private FFMpegEncoder encoder;
+
     private FFMpegDecoder decoder;
+
     private FFSwrContext swrContext;
 
     private FFOutputTarget target;
@@ -45,6 +48,16 @@ public class FFAudioRecorder implements AutoCloseable {
     private FFRecordSource source;
 
     private CountDownLatch stateLock;
+
+    // Filter处理
+
+    private FFAudioMixer mixer;
+
+    /*private FFAudioBufferFilter sourceFilter;
+
+    private FFAudioSinkFilter sinkFilter;*/
+
+    // Filter结束
 
     public FFAudioRecorder() {
     }
@@ -97,6 +110,14 @@ public class FFAudioRecorder implements AutoCloseable {
         return source;
     }
 
+    public void setMixer(FFAudioMixer mixer) {
+        this.mixer = mixer;
+    }
+
+    public FFAudioMixer getMixer() {
+        return mixer;
+    }
+
     public boolean openRecorderDevice() {
 
         if (state != RecorderState.STOPPED) {
@@ -105,43 +126,13 @@ public class FFAudioRecorder implements AutoCloseable {
 
         close();
 
-        sourceFormat = source.getFormat();
-        if (sourceFormat == null) {
-            logger.error("provide source does not have input format.");
+        sourceContext = new FFAudioSourceContext(source);
+        if (!sourceContext.open()) {
+            logger.error("failed to open input source");
             return false;
         }
 
-        // 配置录音选项
-        AVDictionary dictionary = new AVDictionary();
-        int state = 0;
-        // 创建Context
-        sourceFormatCtx = avformat.avformat_alloc_context();
-        // 打开输入设备
-        state = avformat.avformat_open_input(
-                sourceFormatCtx,
-                source.getUrl(),
-                sourceFormat,
-                dictionary
-        );
-
-        if (state < 0) {
-            logger.error("failed to open input format : ", FFMpegUtils.createException(state));
-            return false;
-        }
-
-        state = avformat.avformat_find_stream_info(sourceFormatCtx,(AVDictionary) null);
-        if (state < 0) {
-            logger.error("failed to open input format : ", FFMpegUtils.createException(state));
-            return false;
-        }
-
-        // 查找音频流
-        sourceAudioSteam = FFMpegUtils.findInputAVSteam(sourceFormatCtx,MediaType.MediaTypeAudio);
-        if (sourceAudioSteam == null) {
-            // 视频流不存在
-            logger.error("Can not found video source");
-            return false;
-        }
+        AVStream sourceAudioSteam = sourceContext.getStream();
 
         // 创建音频解码器
         decoder = new FFMpegDecoder(sourceAudioSteam.codecpar().codec_id());
@@ -165,7 +156,38 @@ public class FFAudioRecorder implements AutoCloseable {
 
         // 重采样上下文
         swrContext = encoder.createAudioSwrContext(decoder);
+
+        if (this.mixer != null) {
+            // 创建输入Filter，用于混音和其他调整。
+            this.mixer.refInputFilter(this);
+        }
+
         this.state = RecorderState.READY;
+
+        /*AVFilterGraph graph = avfilter.avfilter_graph_alloc();
+
+        AVCodecParameters parameters = avcodec.avcodec_parameters_alloc();
+        encoder.transferParameterTo(parameters);
+
+        sourceFilter = new FFAudioBufferFilter();
+        FFAudioMixFilter audioMixFilter = new FFAudioMixFilter();
+        FFAudioFormatFilter formatsFilter = new FFAudioFormatFilter();
+        sinkFilter = new FFAudioSinkFilter();
+
+        sourceFilter.connectNext(audioMixFilter,0,0);
+        audioMixFilter.connectNext(formatsFilter,0,0);
+        formatsFilter.connectNext(sinkFilter,0,0);
+
+        sourceFilter.configure(graph,parameters);
+        audioMixFilter.configure(graph,parameters);
+        formatsFilter.configure(graph,parameters);
+        sinkFilter.configure(graph,parameters);
+
+        sourceFilter.filterConnect();
+        audioMixFilter.filterConnect();
+        formatsFilter.filterConnect();
+
+        avfilter.avfilter_graph_config(graph,null);*/
 
         return true;
     }
@@ -183,12 +205,71 @@ public class FFAudioRecorder implements AutoCloseable {
             return;
         }
 
+        if (mixer != null && !mixer.isConfigured()) {
+            mixer.fullyConnect();
+        }
+
+        // TODO 滤镜字段区
+
+        // 上下文
+        // 输入
+        /*AVFilter inputFilter = avfilter.avfilter_get_by_name("abuffer");
+        AVFilterContext inputCtx = avfilter.avfilter_graph_alloc_filter(graph,inputFilter,"src");
+
+        StringBuilder abufferParam = new StringBuilder()
+                .append("channel_layout=").append(AudioChannelLayout.valueOf(
+                        encoder.channelLayout()
+                ).getName()).append(":")
+                .append("channels=").append(encoder.channels()).append(":")
+                .append("sample_rate=").append(encoder.sampleRate()).append(":")
+                .append("sample_fmt=").append(encoder.sampleFormat().name());
+
+        avfilter.avfilter_init_str(inputCtx,abufferParam.toString());
+
+        // AMix
+
+        AVFilter mixFilter = avfilter.avfilter_get_by_name("amix");
+        AVFilterContext mixContext = avfilter.avfilter_graph_alloc_filter(graph,mixFilter,"mixer");
+        StringBuilder amixParams = new StringBuilder()
+                .append("inputs=").append(1);
+
+        avfilter.avfilter_init_str(mixContext,amixParams.toString());*/
+
+        // 输出
+
+
+
+        /*AVFilter formatFilter = avfilter.avfilter_get_by_name("aformat");
+        AVFilterContext formatCtx = avfilter.avfilter_graph_alloc_filter(graph,formatFilter,"format");
+        StringBuilder formatParam = new StringBuilder()
+                .append("channel_layouts=").append(AudioChannelLayout.valueOf(
+                        encoder.channelLayout()
+                ).getName()).append(":")
+                .append("sample_fmts=").append(encoder.sampleFormat().name()).append(":")
+                .append("sample_rates=").append(encoder.sampleRate());
+
+        avfilter.avfilter_init_str(formatCtx, formatParam.toString());
+
+        AVFilter outFilter = avfilter.avfilter_get_by_name("abuffersink");
+        AVFilterContext outCtx = avfilter.avfilter_graph_alloc_filter(graph,outFilter,"dst");
+        avfilter.avfilter_init_dict(outCtx,(AVDictionary) null);
+
+        avfilter.avfilter_link(inputCtx,0,mixContext,0);
+        avfilter.avfilter_link(mixContext,0,formatCtx,0);
+        avfilter.avfilter_link(formatCtx,0,outCtx,0);*/
+
+        // TODO 滤镜字段区结束
+
+        //FFAudioBufferFilter sourceFilter = mixer.refInputFilter(this);
+        //FFAudioSinkFilter sinkFilter = mixer.getSinkFilter();
+
+        AVStream sourceAudioSteam = sourceContext.getStream();
         AtomicLong count = new AtomicLong(0);
 
         // 初始化一个音视频数据包
         AVPacket packet = avcodec.av_packet_alloc();
         // 开始从视频流读取数据
-        while (avformat.av_read_frame(sourceFormatCtx, packet) == 0) {
+        while (avformat.av_read_frame(sourceContext.getFormatCtx(), packet) == 0) {
             if (state == RecorderState.READY) {
                 state = RecorderState.RECORDING;
             } else if (state == RecorderState.PAUSED) {
@@ -210,8 +291,69 @@ public class FFAudioRecorder implements AutoCloseable {
                 // 将这个数据包发送到解码器中（解码器是异步运行的）
                 decoder.decodePacket(packet, frame -> {
                     // 解码完毕，开始转码，这一步的目的是将输入格式转码为输出的格式
+
                     swrContext.convert(frame, out -> {
+
+                        /*AVFrame frameTrans = avutil.av_frame_alloc();
+                        frameTrans.sample_rate(out.sample_rate());
+                        frameTrans.nb_samples(out.nb_samples());
+                        frameTrans.format(out.format());
+                        frameTrans.ch_layout(out.ch_layout());
+                        avfilter.av_buffersrc_add_frame(sourceFilter.context(),out);*/
+
+                        if (mixer != null) {
+                            mixer.transform(this,out, transformFrame -> {
+
+                                transformFrame.pts(out.pts());
+                                transformFrame.pkt_dts(out.pkt_dts());
+
+                                encoder.encodeFrame(transformFrame, encoded -> {
+                                    if (state == RecorderState.STOPPED) {
+                                        avcodec.av_packet_unref(packet);
+                                        return;
+                                    }
+                                    target.writeMediaPacket(encoded,MediaType.MediaTypeAudio);
+                                });
+                            });
+                        } else {
+                            encoder.encodeFrame(out, encoded -> {
+                                if (state == RecorderState.STOPPED) {
+                                    avcodec.av_packet_unref(packet);
+                                    return;
+                                }
+                                target.writeMediaPacket(encoded,MediaType.MediaTypeAudio);
+
+                            });
+                        }
+
+                        //avutil.av_frame_get_buffer(frameTrans,1);
                         // 转码完毕，开始编码，这一步的目的是将转码后的数据进行编码以便输出到文件。
+
+                        /*while (avfilter.av_buffersink_get_frame(sinkFilter.context(),frameTrans) >= 0) {
+                            frameTrans.pts(out.pts());
+                            frameTrans.pkt_dts(out.pkt_dts());
+                            // 开始编码
+                            encoder.encodeFrame(frameTrans, encoded -> {
+                                if (state == RecorderState.STOPPED) {
+                                    avcodec.av_packet_unref(packet);
+                                    return;
+                                }
+                                target.writeMediaPacket(encoded,MediaType.MediaTypeAudio);
+
+                            });
+                            //avutil.av_frame_unref(frameTrans);
+                            count.set(count.get() + 1);
+                        }*/
+
+
+                    });
+
+                    /*swrContext.convert(frame, out -> {
+                        // 转码完毕，开始编码，这一步的目的是将转码后的数据进行编码以便输出到文件。
+
+                        // 开始编码
+
+
                         encoder.encodeFrame(out, encoded -> {
                             if (state == RecorderState.STOPPED) {
                                 avcodec.av_packet_unref(packet);
@@ -221,7 +363,7 @@ public class FFAudioRecorder implements AutoCloseable {
 
                         });
                         count.set(count.get() + 1);
-                    });
+                    });*/
                 });
 
             }
@@ -269,10 +411,8 @@ public class FFAudioRecorder implements AutoCloseable {
     @Override
     public void close() {
 
-        if (sourceFormatCtx != null && !sourceFormatCtx.isNull()) {
-            avformat.avformat_close_input(sourceFormatCtx);
-            avformat.avformat_free_context(sourceFormatCtx);
-            sourceFormat = null;
+        if (sourceContext != null ) {
+            sourceContext.close();
         }
 
         if (swrContext != null) {

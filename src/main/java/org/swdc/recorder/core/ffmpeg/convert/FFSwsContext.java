@@ -1,10 +1,12 @@
-package org.swdc.recorder.core.ffmpeg;
+package org.swdc.recorder.core.ffmpeg.convert;
 
 import org.bytedeco.ffmpeg.avutil.AVFrame;
 import org.bytedeco.ffmpeg.global.avutil;
 import org.bytedeco.ffmpeg.global.swscale;
 import org.bytedeco.ffmpeg.swscale.SwsContext;
 import org.bytedeco.javacpp.BytePointer;
+import org.swdc.recorder.core.ffmpeg.FFMpegEncoder;
+import org.swdc.recorder.core.ffmpeg.FFMpegUtils;
 
 public class FFSwsContext implements AutoCloseable {
 

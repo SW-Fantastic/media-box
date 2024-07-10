@@ -2,15 +2,16 @@ package org.swdc.recorder.core.ffmpeg;
 
 import org.bytedeco.ffmpeg.avcodec.AVPacket;
 import org.bytedeco.ffmpeg.avformat.*;
-import org.bytedeco.ffmpeg.avutil.AVDictionary;
 import org.bytedeco.ffmpeg.avutil.AVFrame;
-import org.bytedeco.ffmpeg.avutil.AVRational;
 import org.bytedeco.ffmpeg.global.avcodec;
 import org.bytedeco.ffmpeg.global.avdevice;
 import org.bytedeco.ffmpeg.global.avformat;
 import org.bytedeco.ffmpeg.global.avutil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.swdc.recorder.core.ffmpeg.convert.FFSwsContext;
+import org.swdc.recorder.core.ffmpeg.source.FFRecordSource;
+import org.swdc.recorder.core.ffmpeg.source.FFVideoSourceContext;
 
 import java.awt.*;
 import java.util.concurrent.CountDownLatch;
@@ -18,7 +19,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class FFVideoRecorder implements AutoCloseable {
 
-    private static final String pixelFormatKey = "pixel_format";
+    //private static final String pixelFormatKey = "pixel_format";
 
     private static Logger logger = LoggerFactory.getLogger(FFVideoRecorder.class);
 
@@ -28,20 +29,7 @@ public class FFVideoRecorder implements AutoCloseable {
 
     private int bitRate = 6000000;
 
-    /**
-     * 视频输入格式
-     */
-    private AVInputFormat sourceFormat;
-
-    /**
-     * 视频输入格式上下文
-     */
-    private AVFormatContext sourceFormatCtx;
-
-    /**
-     * 视频输入流
-     */
-    private AVStream sourceVideoSteam;
+    private FFVideoSourceContext sourceContext;
 
     /**
      * 视频流解码器
@@ -139,61 +127,13 @@ public class FFVideoRecorder implements AutoCloseable {
 
         this.close();
 
-        // 搜索输入设备
-        sourceFormat = source.getFormat();
-        if (sourceFormat == null) {
-            logger.error("provided source does not have a input format");
+        sourceContext = new FFVideoSourceContext(this.source);
+        if (!sourceContext.open()) {
+            logger.error("failed to open input source");
             return false;
-        }
-        // 配置录屏选项
-        AVDictionary dictionary = new AVDictionary();
-        int state = 0;
-        // 设定像素格式
-        state = avutil.av_dict_set(dictionary,pixelFormatKey, getCapturePixelFormatName(), 1);
-        if (state < 0) {
-            logger.error("failed to setup options ", FFMpegUtils.createException(state));
-            return false;
-        }
-        // 创建Context
-        sourceFormatCtx = avformat.avformat_alloc_context();
-        // 打开输入设备
-        state = avformat.avformat_open_input(
-                sourceFormatCtx,
-                source.getUrl(),
-                sourceFormat,
-                dictionary
-        );
-
-        if (state < 0) {
-            logger.warn("failed to open with special pixel format, try to open directly.");
-            if (state < 0) {
-                logger.error("failed to setup options ", FFMpegUtils.createException(state));
-                return false;
-            }
-            state = avformat.avformat_open_input(
-                    sourceFormatCtx,
-                    source.getUrl(),
-                    sourceFormat,
-                    dictionary
-            );
-            if (state < 0) {
-                logger.error("failed to open input format : ", FFMpegUtils.createException(state));
-                return false;
-            }
         }
 
-        state = avformat.avformat_find_stream_info(sourceFormatCtx,(AVDictionary) null);
-        if (state < 0) {
-            logger.error("failed to fetch steam info");
-            return false;
-        }
-        // 查找视频流
-        sourceVideoSteam = FFMpegUtils.findInputAVSteam(sourceFormatCtx,MediaType.MediaTypeVideo);
-        if (sourceVideoSteam == null) {
-            // 视频流不存在
-            logger.error("Can not found video source");
-            return false;
-        }
+        AVStream sourceVideoSteam = sourceContext.getStream();
 
         // 初始化解码器
         // 从视频流的编码参数中可以得到编码器的Id，通过这个id能够找到解码器对象
@@ -209,7 +149,7 @@ public class FFVideoRecorder implements AutoCloseable {
                 .groupSize(12)
                 .pixFormat(encodePixFormat)
                 .mediaType(MediaType.MediaTypeVideo)
-                .timeBase(1,24)
+                .timeBase(1,25)
                 .maxBFrameSize(3);
 
         if (!this.target.openOutput(encoder)) {
@@ -240,6 +180,7 @@ public class FFVideoRecorder implements AutoCloseable {
 
         this.state = RecorderState.RECORDING;
 
+        AVStream sourceVideoSteam = sourceContext.getStream();
 
         AtomicLong count = new AtomicLong(0);
 
@@ -249,7 +190,7 @@ public class FFVideoRecorder implements AutoCloseable {
         // 初始化一个音视频数据包
         AVPacket packet = avcodec.av_packet_alloc();
         // 开始从视频流读取数据
-        while (avformat.av_read_frame(sourceFormatCtx, packet) == 0) {
+        while (avformat.av_read_frame(sourceContext.getFormatCtx(), packet) == 0) {
             if (state == RecorderState.PAUSED) {
                 try {
                     stateLock = new CountDownLatch(1);
@@ -357,10 +298,8 @@ public class FFVideoRecorder implements AutoCloseable {
      */
     @Override
     public void close() {
-        if (sourceFormatCtx != null && !sourceFormatCtx.isNull()) {
-            avformat.avformat_close_input(sourceFormatCtx);
-            avformat.avformat_free_context(sourceFormatCtx);
-            sourceFormat = null;
+        if (sourceContext != null ) {
+            sourceContext.close();
         }
 
         if (swsContext != null) {

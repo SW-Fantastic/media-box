@@ -1,4 +1,4 @@
-package org.swdc.recorder.core.ffmpeg;
+package org.swdc.recorder.core.ffmpeg.convert;
 
 import org.bytedeco.ffmpeg.avcodec.AVCodecParameters;
 import org.bytedeco.ffmpeg.avutil.AVAudioFifo;
@@ -7,6 +7,7 @@ import org.bytedeco.ffmpeg.global.avcodec;
 import org.bytedeco.ffmpeg.global.avutil;
 import org.bytedeco.ffmpeg.global.swresample;
 import org.bytedeco.ffmpeg.swresample.SwrContext;
+import org.swdc.recorder.core.ffmpeg.FFMpegUtils;
 
 import java.util.function.Consumer;
 
