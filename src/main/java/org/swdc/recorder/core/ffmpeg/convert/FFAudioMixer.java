@@ -9,6 +9,7 @@ import org.bytedeco.ffmpeg.global.avutil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.swdc.recorder.core.ffmpeg.FFMpegUtils;
+import org.swdc.recorder.core.ffmpeg.filters.*;
 
 import java.io.Closeable;
 import java.util.HashMap;
@@ -27,7 +28,7 @@ public class FFAudioMixer implements Closeable {
 
     private Logger logger = LoggerFactory.getLogger(FFAudioMixer.class);
 
-    private Map<Object, Map<Class,FFAudioFilter>> typedFilters = new ConcurrentHashMap<>();
+    private Map<Object, Map<Class, FFAudioFilter>> typedFilters = new ConcurrentHashMap<>();
 
     private FFAudioMixFilter mixFilter;
 
@@ -89,6 +90,29 @@ public class FFAudioMixer implements Closeable {
         while (avfilter.av_buffersink_get_frame(sinkFilter.context(),filteredFrame) >= 0)  {
             filtered.accept(filteredFrame);
         }
+
+    }
+
+    public FFAudioVolumeFilter refVolumeFilter(Object key) {
+
+        Map<Class,FFAudioFilter> typedFilterMap = typedFilters.computeIfAbsent(key, k -> new HashMap<>());
+        if (typedFilterMap.containsKey(FFAudioVolumeFilter.class)) {
+            return (FFAudioVolumeFilter) typedFilterMap.get(FFAudioVolumeFilter.class);
+        }
+
+        if (configured) {
+            logger.error("failed to create input filter with context is configured.");
+            return null;
+        }
+
+        FFAudioBufferFilter sourceFilter = refInputFilter(key);
+        FFAudioVolumeFilter volumeFilter = new FFAudioVolumeFilter();
+
+        sourceFilter.connectNext(volumeFilter,0,0);
+        volumeFilter.connectNext(mixFilter,0,mixFilter.getIntputs());
+        typedFilterMap.put(FFAudioVolumeFilter.class,volumeFilter);
+
+        return volumeFilter;
 
     }
 

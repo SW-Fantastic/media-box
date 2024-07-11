@@ -1,4 +1,4 @@
-package org.swdc.recorder.core.ffmpeg.convert;
+package org.swdc.recorder.core.ffmpeg.filters;
 
 /**
  * 音频滤镜链接符。

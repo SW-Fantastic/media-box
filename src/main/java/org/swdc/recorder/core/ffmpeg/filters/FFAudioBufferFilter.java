@@ -1,4 +1,4 @@
-package org.swdc.recorder.core.ffmpeg.convert;
+package org.swdc.recorder.core.ffmpeg.filters;
 
 import org.bytedeco.ffmpeg.avcodec.AVCodecParameters;
 import org.bytedeco.ffmpeg.avfilter.AVFilter;
@@ -10,8 +10,6 @@ import org.slf4j.LoggerFactory;
 import org.swdc.recorder.core.ffmpeg.AudioChannelLayout;
 import org.swdc.recorder.core.ffmpeg.AudioSampleFormat;
 import org.swdc.recorder.core.ffmpeg.FFMpegUtils;
-
-import java.io.IOException;
 
 /**
  * 音频输入滤镜，是一个非常特殊的滤镜，
@@ -94,6 +92,11 @@ public class FFAudioBufferFilter implements FFAudioFilter {
 
     @Override
     public void connectNext(FFAudioFilter nextFilter, int inputPad, int outputPad) {
+        if (this.connect != null && connect.getOutFilter() instanceof AudioFilterListener) {
+            AudioFilterListener trigger = (AudioFilterListener) connect.getOutFilter();
+            trigger.onDisconnect(this);
+        }
+
         this.connect = new AudioFilterConnect(
                 this,
                 nextFilter,
@@ -101,7 +104,10 @@ public class FFAudioBufferFilter implements FFAudioFilter {
                 outputPad
         );
 
-        nextFilter.connected();
+        if (nextFilter instanceof AudioFilterListener) {
+            AudioFilterListener trigger = (AudioFilterListener) nextFilter;
+            trigger.onConnected(this);
+        }
     }
 
     @Override

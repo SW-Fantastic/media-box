@@ -1,11 +1,10 @@
-package org.swdc.recorder.core.ffmpeg.convert;
+package org.swdc.recorder.core.ffmpeg.filters;
 
 import org.bytedeco.ffmpeg.avcodec.AVCodecParameters;
 import org.bytedeco.ffmpeg.avfilter.AVFilterContext;
 import org.bytedeco.ffmpeg.avfilter.AVFilterGraph;
 
 import java.io.Closeable;
-import java.io.IOException;
 
 public interface FFAudioFilter extends Closeable {
 
@@ -38,11 +37,6 @@ public interface FFAudioFilter extends Closeable {
      */
     AVFilterContext context();
 
-    /**
-     * 回调，connectNext后应当调用本方法。
-     */
-    default void connected() {
-    }
 
     /**
      * 真正完成Filter的链接。

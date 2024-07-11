@@ -1,11 +1,15 @@
 package org.swdc.recorder.views.controllers;
 
 import jakarta.inject.Inject;
+import javafx.beans.Observable;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
 import org.slf4j.Logger;
 import org.swdc.fx.font.FontSize;
@@ -21,6 +25,7 @@ import org.swdc.recorder.views.MainView;
 
 import java.io.File;
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
 
 /**
@@ -48,6 +53,9 @@ public class MainController extends ViewController<MainView> {
     private ComboBox<FFRecordSource> cbxAudioSource;
 
     @FXML
+    private ComboBox<FFRecordSource> cbxAudioSecondSource;
+
+    @FXML
     private ComboBox<FFRecordSource> cbxVideoSource;
 
     @FXML
@@ -68,6 +76,12 @@ public class MainController extends ViewController<MainView> {
     @FXML
     private TextField txtFileName;
 
+    @FXML
+    private Slider slVol;
+
+    @FXML
+    private Slider slVolSecond;
+
     @Inject
     private ConfigView configView;
 
@@ -77,12 +91,64 @@ public class MainController extends ViewController<MainView> {
     @Inject
     private DesktopRecorder recorder = null;
 
+    private List<FFRecordSource> audioSources;
+
+    private List<FFRecordSource> videoSources;
+
     @Override
     protected void viewReady(URL url, ResourceBundle resourceBundle) {
 
+
+        slVol.setMax(1);
+        slVol.setMin(0);
+        slVol.setValue(0.5);
+        slVol.valueProperty().addListener(this::volMainChanged);
+
+        slVolSecond.setMax(1);
+        slVolSecond.setMin(0);
+        slVolSecond.setValue(0.5);
+        slVolSecond.valueProperty().addListener(this::volSecondChanged);
+
         txtFileName.setText("录制-" + System.currentTimeMillis());
         setRecIcon("play");
+
         refreshDevices();
+
+        cbxAudioSource.getSelectionModel().selectedItemProperty()
+                .addListener(this::sourceChanged);
+
+    }
+
+
+
+    private void sourceChanged(Observable value) {
+
+        FFRecordSource source = cbxAudioSource.getSelectionModel().getSelectedItem();
+        List<FFRecordSource> sources = audioSources.stream()
+                .filter(s -> s != source || s.getFormat() == null)
+                .toList();
+
+        ObservableList<FFRecordSource> secondSources = cbxAudioSecondSource.getItems();
+        FFRecordSource secondSelected = cbxAudioSecondSource.getSelectionModel().getSelectedItem();
+        secondSources.clear();
+        secondSources.addAll(sources);
+        if (sources.contains(secondSelected)) {
+            cbxAudioSecondSource.getSelectionModel().select(secondSelected);
+        }
+
+    }
+
+
+    private void volSecondChanged(Observable observable) {
+
+        recorder.setVolumeSecondary(slVolSecond.getValue());
+
+    }
+
+    private void volMainChanged(Observable observable) {
+
+        recorder.setVolumeMain(slVol.getValue());
+
     }
 
     private void setRecIcon(String icon) {
@@ -116,14 +182,22 @@ public class MainController extends ViewController<MainView> {
             FFLogCallback callback = FFLogCallback.getLogger();
             callback.parseDeviceList(false);
 
-            FFRecordSource audio = cbxAudioSource.getSelectionModel().getSelectedItem();
+            FFRecordSource audioMain = cbxAudioSource.getSelectionModel().getSelectedItem();
+            FFRecordSource audioSecond = cbxAudioSecondSource.getSelectionModel().getSelectedItem();
+
             FFRecordSource video = cbxVideoSource.getSelectionModel().getSelectedItem();
 
-            recorder.setTarget(new File(configuration.getVideoFolder()).getAbsoluteFile(), txtFileName.getText());
-            if (audio != null && audioQuality != null && audioOutFormat != null) {
-                recorder.setAudioOutput(audioOutFormat);
+            if (audioQuality != null && audioOutFormat != null) {
                 recorder.setAudioQuality(audioQuality);
-                recorder.setAudioSource(audio);
+                recorder.setAudioOutput(audioOutFormat);
+            }
+
+            recorder.setTarget(new File(configuration.getVideoFolder()).getAbsoluteFile(), txtFileName.getText());
+            if (audioMain != null && audioMain.getFormat() != null) {
+                recorder.setAudioSource(audioMain);
+            }
+            if (audioSecond != null && audioSecond.getFormat() != null) {
+                recorder.setAudioSecondarySource(audioSecond);
             }
 
             if (video != null && videoQuality != null && videoOutFormat != null) {
@@ -132,7 +206,7 @@ public class MainController extends ViewController<MainView> {
                 recorder.setVideoSource(video);
             }
 
-            if (recorder.canRecordAudio() || recorder.canRecordVideo()) {
+            if (recorder.canRecordAudioMain() || recorder.canRecordVideo()) {
                 if (!recorder.start()) {
                     // failed to start
                 } else {
@@ -147,18 +221,27 @@ public class MainController extends ViewController<MainView> {
 
     public void refreshDevices() {
 
+        FFRecordSource emptySource = new FFRecordSource();
+        emptySource.setDeviceName("不录制音频");
+        emptySource.setType(MediaType.MediaTypeAudio);
+
+        List<FFRecordSource> audioSources = FFMpegUtils.getAudioSources();
+        audioSources.add(emptySource);
+        this.audioSources = audioSources;
+
         ObservableList<FFRecordSource> audioSourceItems = cbxAudioSource.getItems();
         audioSourceItems.clear();
-        audioSourceItems.addAll(
-                FFMpegUtils.getAudioSources()
-        );
+        audioSourceItems.addAll(audioSources);
         cbxAudioSource.getSelectionModel().select(0);
+
+        sourceChanged(null);
+
+        List<FFRecordSource> videoSources = FFMpegUtils.getVideoSources();
+        this.videoSources = videoSources;
 
         ObservableList<FFRecordSource> videoSourceItems = cbxVideoSource.getItems();
         videoSourceItems.clear();
-        videoSourceItems.addAll(
-                FFMpegUtils.getVideoSources()
-        );
+        videoSourceItems.addAll(videoSources);
         cbxVideoSource.getSelectionModel().select(0);
 
         ObservableList<RecordVideoQuality> videoQualities = cbxBitrate.getItems();

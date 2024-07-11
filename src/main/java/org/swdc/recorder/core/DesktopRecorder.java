@@ -26,7 +26,9 @@ public class DesktopRecorder {
     @Inject
     private Logger logger;
 
-    private FFAudioRecorder audioRecorder;
+    private FFAudioRecorder audioRecorderMain;
+
+    private FFAudioRecorder audioRecorderSecond;
 
     private FFVideoRecorder videoRecorder;
 
@@ -44,12 +46,14 @@ public class DesktopRecorder {
 
     private Map<MediaType,RecordOutputFormat> outputFormats = new HashMap<>();
 
-    private ThreadPoolExecutor executor = new ThreadPoolExecutor(3,3,0, TimeUnit.MINUTES,new LinkedBlockingDeque<>());
+    private ThreadPoolExecutor executor = new ThreadPoolExecutor(4,4,0, TimeUnit.MINUTES,new LinkedBlockingDeque<>());
 
     public DesktopRecorder() {
 
         audioMixer = new FFAudioMixer();
-        audioRecorder = new FFAudioRecorder();
+        audioRecorderMain = new FFAudioRecorder();
+        audioRecorderSecond = new FFAudioRecorder();
+
         videoRecorder = new FFVideoRecorder();
         mixParameter = avcodec.avcodec_parameters_alloc();
 
@@ -66,13 +70,19 @@ public class DesktopRecorder {
     }
 
     public void setAudioSource(FFRecordSource recordSource) {
-        audioRecorder.setSource(recordSource);
+        audioRecorderMain.setSource(recordSource);
+    }
+
+    public void setAudioSecondarySource(FFRecordSource source) {
+        audioRecorderSecond.setSource(source);
     }
 
     public void setAudioOutput(RecordOutputFormat format) {
 
-        audioRecorder.setAudioCodecs(format.getAudioCodecs());
-        audioRecorder.setSampleFormat(format.getSampleFormat());
+        audioRecorderMain.setAudioCodecs(format.getAudioCodecs());
+        audioRecorderMain.setSampleFormat(format.getSampleFormat());
+        audioRecorderSecond.setAudioCodecs(format.getAudioCodecs());
+        audioRecorderSecond.setSampleFormat(format.getSampleFormat());
 
         AVChannelLayout layout = new AVChannelLayout();
         int state = avutil.av_channel_layout_from_mask(
@@ -81,6 +91,7 @@ public class DesktopRecorder {
         if (state < 0) {
             throw FFMpegUtils.createException(state);
         }
+
         mixParameter.format(format.getSampleFormat().getFfmpegFormatId());
         mixParameter.ch_layout(layout);
 
@@ -100,7 +111,8 @@ public class DesktopRecorder {
 
     public void setAudioQuality(RecordAudioQuality quality) {
         mixParameter.sample_rate(quality.getSampleRate());
-        audioRecorder.setSampleRate(quality.getSampleRate());
+        audioRecorderMain.setSampleRate(quality.getSampleRate());
+        audioRecorderSecond.setSampleRate(quality.getSampleRate());
     }
 
     public boolean start() {
@@ -112,8 +124,6 @@ public class DesktopRecorder {
         if (isRecording) {
             return true;
         }
-
-
 
         int numberOfSamples = avutil.av_samples_get_buffer_size(
                 (IntPointer) null,
@@ -127,7 +137,8 @@ public class DesktopRecorder {
         audioMixer.close();
         audioMixer.configure(mixParameter);
 
-        boolean doRecAudio = canRecordAudio();
+        boolean doRecAudio = canRecordAudioMain();
+        boolean doRecAudioSecond = canRecordAudioSecond();
         boolean doRecVideo = canRecordVideo();
 
         String extension = getOutputFileExtension();
@@ -137,8 +148,14 @@ public class DesktopRecorder {
 
         if (doRecAudio) {
             latchCount ++;
-            audioRecorder.setMixer(audioMixer);
-            audioRecorder.setTarget(target);
+            audioRecorderMain.setMixer(audioMixer);
+            audioRecorderMain.setTarget(target);
+        }
+
+        if (doRecAudioSecond) {
+            latchCount ++;
+            audioRecorderSecond.setMixer(audioMixer);
+            audioRecorderSecond.setTarget(target);
         }
 
         if (doRecVideo) {
@@ -153,44 +170,59 @@ public class DesktopRecorder {
 
         CountDownLatch latch = new CountDownLatch(latchCount);
 
-        if(videoRecorder.openRecorderDevice() && audioRecorder.openRecorderDevice()) {
-
-
-            executor.submit(() -> {
-
-                try {
-
-                    if (doRecAudio) {
-                        executor.submit(() -> {
-                            audioRecorder.record();
-                            latch.countDown();
-                        });
-                    }
-                    if (doRecVideo) {
-                        executor.submit(() -> {
-                            videoRecorder.record();
-                            latch.countDown();
-                        });
-                    }
-
-                    latch.await();
-
-                } catch (Exception e) {
-                }
-
-                audioRecorder.close();
-                videoRecorder.close();
-                target.close();
-
-                isRecording = false;
-
-            });
-
-            isRecording = true;
-            return true;
+        if (doRecAudio && !audioRecorderMain.openRecorderDevice()) {
+            return false;
         }
 
-        return false;
+        if (doRecAudioSecond && !audioRecorderSecond.openRecorderDevice()) {
+            return false;
+        }
+
+        if (doRecVideo && !videoRecorder.openRecorderDevice()) {
+            return false;
+        }
+
+        executor.submit(() -> {
+
+            try {
+
+                if (doRecAudio) {
+                    executor.submit(() -> {
+                        audioRecorderMain.record();
+                        latch.countDown();
+                    });
+                }
+
+                if (doRecAudioSecond) {
+                    executor.submit(() -> {
+                        audioRecorderSecond.record();;
+                        latch.countDown();
+                    });
+                }
+
+                if (doRecVideo ) {
+                    executor.submit(() -> {
+                        videoRecorder.record();
+                        latch.countDown();
+                    });
+                }
+
+                latch.await();
+
+            } catch (Exception e) {
+            }
+
+            videoRecorder.close();
+            audioRecorderMain.close();
+            audioRecorderSecond.close();
+            target.close();
+
+            isRecording = false;
+
+        });
+
+        isRecording = true;
+        return true;
 
     }
 
@@ -198,7 +230,8 @@ public class DesktopRecorder {
 
         if (isRecording) {
 
-            audioRecorder.stop();
+            audioRecorderMain.stop();
+            audioRecorderSecond.stop();
             videoRecorder.stop();
             outputFormats.clear();
 
@@ -210,23 +243,44 @@ public class DesktopRecorder {
         return isRecording;
     }
 
-    public boolean canRecordAudio() {
-        return audioRecorder.getAudioCodecs() != null &&
-                audioRecorder.getSampleFormat() != null &&
-                audioRecorder.getSource() != null;
+    public boolean canRecordAudioSecond() {
+        return audioRecorderSecond.getAudioCodecs() != null &&
+                audioRecorderSecond.getSampleFormat() != null &&
+                audioRecorderSecond.getSource() != null;
+    }
+
+    public boolean canRecordAudioMain() {
+        return audioRecorderMain.getAudioCodecs() != null &&
+                audioRecorderMain.getSampleFormat() != null &&
+                audioRecorderMain.getSource() != null;
     }
 
     public boolean canRecordVideo() {
         return videoRecorder.getVideoCodecs() != null &&
                 videoRecorder.getEncodePixFormat() != null &&
-                audioRecorder.getSource() != null;
+                videoRecorder.getSource() != null;
+    }
+
+
+    public void setVolumeMain(double val) {
+        if (!canRecordAudioMain()) {
+            return;
+        }
+        audioRecorderMain.setVolume(val);
+    }
+
+    public void setVolumeSecondary(double val) {
+        if (!canRecordAudioSecond()) {
+            return;
+        }
+        audioRecorderSecond.setVolume(val);
     }
 
 
     public String getOutputFileExtension() {
         if (canRecordVideo()) {
             return outputFormats.get(MediaType.MediaTypeVideo).getExtension();
-        } else if (canRecordAudio()) {
+        } else if (canRecordAudioMain()) {
             return outputFormats.get(MediaType.MediaTypeAudio).getExtension();
         }
         return null;

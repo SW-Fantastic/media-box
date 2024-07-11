@@ -11,6 +11,7 @@ import org.bytedeco.ffmpeg.global.avutil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.swdc.recorder.core.ffmpeg.convert.*;
+import org.swdc.recorder.core.ffmpeg.filters.FFAudioVolumeFilter;
 import org.swdc.recorder.core.ffmpeg.source.FFAudioSourceContext;
 import org.swdc.recorder.core.ffmpeg.source.FFRecordSource;
 
@@ -52,6 +53,10 @@ public class FFAudioRecorder implements AutoCloseable {
     // Filter处理
 
     private FFAudioMixer mixer;
+
+    private FFAudioVolumeFilter volumeFilter;
+
+    private double volume = 1;
 
     /*private FFAudioBufferFilter sourceFilter;
 
@@ -160,6 +165,8 @@ public class FFAudioRecorder implements AutoCloseable {
         if (this.mixer != null) {
             // 创建输入Filter，用于混音和其他调整。
             this.mixer.refInputFilter(this);
+            this.volumeFilter = this.mixer.refVolumeFilter(this);
+            this.volumeFilter.setVolume(volume);
         }
 
         this.state = RecorderState.READY;
@@ -264,7 +271,6 @@ public class FFAudioRecorder implements AutoCloseable {
         //FFAudioSinkFilter sinkFilter = mixer.getSinkFilter();
 
         AVStream sourceAudioSteam = sourceContext.getStream();
-        AtomicLong count = new AtomicLong(0);
 
         // 初始化一个音视频数据包
         AVPacket packet = avcodec.av_packet_alloc();
@@ -374,6 +380,17 @@ public class FFAudioRecorder implements AutoCloseable {
 
         avcodec.av_packet_free(packet);
 
+    }
+
+    public double getVolume() {
+        return volumeFilter.getVolume();
+    }
+
+    public void setVolume(double volume) {
+        this.volume = volume;
+        if (this.volumeFilter != null) {
+            this.volumeFilter.setVolume(volume);
+        }
     }
 
     public void stop() {

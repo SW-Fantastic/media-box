@@ -63,13 +63,13 @@
                         <ComboBox fx:id="cbxAudioSource" prefHeight="26.0" prefWidth="120.0" GridPane.columnIndex="1" />
                         <ComboBox fx:id="cbxSamplerate" prefHeight="26.0" prefWidth="120.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                         <ComboBox fx:id="cbxAudioOut" prefHeight="26.0" prefWidth="120.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                        <Slider value="50.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                        <Slider fx:id="slVol" value="50.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
                            <GridPane.margin>
                               <Insets right="12.0" />
                            </GridPane.margin>
                         </Slider>
-                        <ComboBox prefHeight="26.0" prefWidth="120.0" GridPane.columnIndex="2" />
-                        <Slider value="50.0" GridPane.columnIndex="2" GridPane.rowIndex="1">
+                        <ComboBox fx:id="cbxAudioSecondSource" prefHeight="26.0" prefWidth="120.0" GridPane.columnIndex="2" />
+                        <Slider fx:id="slVolSecond" value="50.0" GridPane.columnIndex="2" GridPane.rowIndex="1">
                            <padding>
                               <Insets right="14.0" />
                            </padding>
@@ -100,10 +100,10 @@
                       <ColumnConstraints halignment="LEFT" hgrow="SOMETIMES" maxWidth="139.3333498636881" minWidth="10.0" prefWidth="126.99999491373697" />
                     </columnConstraints>
                     <rowConstraints>
-                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                      <RowConstraints maxHeight="40.0" minHeight="10.0" prefHeight="40.0" vgrow="SOMETIMES" />
-                      <RowConstraints maxHeight="40.3333740234375" minHeight="10.0" prefHeight="34.66666666666666" vgrow="SOMETIMES" />
-                        <RowConstraints maxHeight="30.33331298828125" minHeight="10.0" prefHeight="29.6666259765625" vgrow="SOMETIMES" />
+                      <RowConstraints maxHeight="35.666656494140625" minHeight="10.0" prefHeight="35.0" vgrow="SOMETIMES" />
+                      <RowConstraints maxHeight="43.99997965494791" minHeight="10.0" prefHeight="37.0" vgrow="SOMETIMES" />
+                      <RowConstraints maxHeight="43.66664632161459" minHeight="10.0" prefHeight="34.00002034505209" vgrow="SOMETIMES" />
+                        <RowConstraints maxHeight="37.33335367838541" minHeight="10.0" prefHeight="32.99997965494791" vgrow="SOMETIMES" />
                     </rowConstraints>
                      <children>
                         <Label text="视频：" />
