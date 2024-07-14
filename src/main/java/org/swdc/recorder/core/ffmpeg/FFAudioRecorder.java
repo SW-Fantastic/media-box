@@ -171,31 +171,6 @@ public class FFAudioRecorder implements AutoCloseable {
 
         this.state = RecorderState.READY;
 
-        /*AVFilterGraph graph = avfilter.avfilter_graph_alloc();
-
-        AVCodecParameters parameters = avcodec.avcodec_parameters_alloc();
-        encoder.transferParameterTo(parameters);
-
-        sourceFilter = new FFAudioBufferFilter();
-        FFAudioMixFilter audioMixFilter = new FFAudioMixFilter();
-        FFAudioFormatFilter formatsFilter = new FFAudioFormatFilter();
-        sinkFilter = new FFAudioSinkFilter();
-
-        sourceFilter.connectNext(audioMixFilter,0,0);
-        audioMixFilter.connectNext(formatsFilter,0,0);
-        formatsFilter.connectNext(sinkFilter,0,0);
-
-        sourceFilter.configure(graph,parameters);
-        audioMixFilter.configure(graph,parameters);
-        formatsFilter.configure(graph,parameters);
-        sinkFilter.configure(graph,parameters);
-
-        sourceFilter.filterConnect();
-        audioMixFilter.filterConnect();
-        formatsFilter.filterConnect();
-
-        avfilter.avfilter_graph_config(graph,null);*/
-
         return true;
     }
 
@@ -215,60 +190,6 @@ public class FFAudioRecorder implements AutoCloseable {
         if (mixer != null && !mixer.isConfigured()) {
             mixer.fullyConnect();
         }
-
-        // TODO 滤镜字段区
-
-        // 上下文
-        // 输入
-        /*AVFilter inputFilter = avfilter.avfilter_get_by_name("abuffer");
-        AVFilterContext inputCtx = avfilter.avfilter_graph_alloc_filter(graph,inputFilter,"src");
-
-        StringBuilder abufferParam = new StringBuilder()
-                .append("channel_layout=").append(AudioChannelLayout.valueOf(
-                        encoder.channelLayout()
-                ).getName()).append(":")
-                .append("channels=").append(encoder.channels()).append(":")
-                .append("sample_rate=").append(encoder.sampleRate()).append(":")
-                .append("sample_fmt=").append(encoder.sampleFormat().name());
-
-        avfilter.avfilter_init_str(inputCtx,abufferParam.toString());
-
-        // AMix
-
-        AVFilter mixFilter = avfilter.avfilter_get_by_name("amix");
-        AVFilterContext mixContext = avfilter.avfilter_graph_alloc_filter(graph,mixFilter,"mixer");
-        StringBuilder amixParams = new StringBuilder()
-                .append("inputs=").append(1);
-
-        avfilter.avfilter_init_str(mixContext,amixParams.toString());*/
-
-        // 输出
-
-
-
-        /*AVFilter formatFilter = avfilter.avfilter_get_by_name("aformat");
-        AVFilterContext formatCtx = avfilter.avfilter_graph_alloc_filter(graph,formatFilter,"format");
-        StringBuilder formatParam = new StringBuilder()
-                .append("channel_layouts=").append(AudioChannelLayout.valueOf(
-                        encoder.channelLayout()
-                ).getName()).append(":")
-                .append("sample_fmts=").append(encoder.sampleFormat().name()).append(":")
-                .append("sample_rates=").append(encoder.sampleRate());
-
-        avfilter.avfilter_init_str(formatCtx, formatParam.toString());
-
-        AVFilter outFilter = avfilter.avfilter_get_by_name("abuffersink");
-        AVFilterContext outCtx = avfilter.avfilter_graph_alloc_filter(graph,outFilter,"dst");
-        avfilter.avfilter_init_dict(outCtx,(AVDictionary) null);
-
-        avfilter.avfilter_link(inputCtx,0,mixContext,0);
-        avfilter.avfilter_link(mixContext,0,formatCtx,0);
-        avfilter.avfilter_link(formatCtx,0,outCtx,0);*/
-
-        // TODO 滤镜字段区结束
-
-        //FFAudioBufferFilter sourceFilter = mixer.refInputFilter(this);
-        //FFAudioSinkFilter sinkFilter = mixer.getSinkFilter();
 
         AVStream sourceAudioSteam = sourceContext.getStream();
 
@@ -300,13 +221,6 @@ public class FFAudioRecorder implements AutoCloseable {
 
                     swrContext.convert(frame, out -> {
 
-                        /*AVFrame frameTrans = avutil.av_frame_alloc();
-                        frameTrans.sample_rate(out.sample_rate());
-                        frameTrans.nb_samples(out.nb_samples());
-                        frameTrans.format(out.format());
-                        frameTrans.ch_layout(out.ch_layout());
-                        avfilter.av_buffersrc_add_frame(sourceFilter.context(),out);*/
-
                         if (mixer != null) {
                             mixer.transform(this,out, transformFrame -> {
 
@@ -332,44 +246,8 @@ public class FFAudioRecorder implements AutoCloseable {
                             });
                         }
 
-                        //avutil.av_frame_get_buffer(frameTrans,1);
-                        // 转码完毕，开始编码，这一步的目的是将转码后的数据进行编码以便输出到文件。
-
-                        /*while (avfilter.av_buffersink_get_frame(sinkFilter.context(),frameTrans) >= 0) {
-                            frameTrans.pts(out.pts());
-                            frameTrans.pkt_dts(out.pkt_dts());
-                            // 开始编码
-                            encoder.encodeFrame(frameTrans, encoded -> {
-                                if (state == RecorderState.STOPPED) {
-                                    avcodec.av_packet_unref(packet);
-                                    return;
-                                }
-                                target.writeMediaPacket(encoded,MediaType.MediaTypeAudio);
-
-                            });
-                            //avutil.av_frame_unref(frameTrans);
-                            count.set(count.get() + 1);
-                        }*/
-
-
                     });
 
-                    /*swrContext.convert(frame, out -> {
-                        // 转码完毕，开始编码，这一步的目的是将转码后的数据进行编码以便输出到文件。
-
-                        // 开始编码
-
-
-                        encoder.encodeFrame(out, encoded -> {
-                            if (state == RecorderState.STOPPED) {
-                                avcodec.av_packet_unref(packet);
-                                return;
-                            }
-                            target.writeMediaPacket(encoded,MediaType.MediaTypeAudio);
-
-                        });
-                        count.set(count.get() + 1);
-                    });*/
                 });
 
             }

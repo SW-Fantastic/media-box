@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="527.0" prefWidth="791.0" styleClass="files-view" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.swdc.recorder.views.controllers.RecordsController">
+   <top>
+      <VBox prefHeight="51.0" prefWidth="791.0" BorderPane.alignment="CENTER">
+         <children>
+            <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="8.0" styleClass="toolBar" VBox.vgrow="ALWAYS">
+               <VBox.margin>
+                  <Insets left="12.0" right="12.0" />
+               </VBox.margin>
+               <children>
+                  <Button id="back" fx:id="btnBack" minHeight="36.0" minWidth="36.0" mnemonicParsing="false" onAction="#folderBack" prefHeight="36.0" prefWidth="36.0" text="Button" />
+                  <Button id="forward" fx:id="btnForward" minHeight="36.0" minWidth="36.0" mnemonicParsing="false" onAction="#folderForward" prefHeight="36.0" prefWidth="36.0" text="Button" />
+                  <Button id="refresh" minHeight="36.0" minWidth="36.0" mnemonicParsing="false" onAction="#doRefreshFolder" prefHeight="36.0" prefWidth="36.0" text="Button" />
+                  <Separator orientation="VERTICAL" prefHeight="200.0" />
+                  <Button id="addFolder" minHeight="36.0" minWidth="36.0" mnemonicParsing="false" prefHeight="36.0" prefWidth="36.0" text="Button" />
+                  <Button id="trashFile" fx:id="btnTrash" layoutX="124.0" layoutY="18.0" minHeight="36.0" minWidth="36.0" mnemonicParsing="false" onAction="#onTrashFiles" prefHeight="36.0" prefWidth="36.0" text="Button" />
+                  <Button id="play" layoutX="168.0" layoutY="18.0" minHeight="36.0" minWidth="36.0" mnemonicParsing="false" prefHeight="36.0" prefWidth="36.0" text="Button" />
+               </children>
+               <padding>
+                  <Insets left="12.0" right="12.0" />
+               </padding>
+            </HBox>
+         </children>
+      </VBox>
+   </top>
+   <padding>
+      <Insets left="12.0" right="12.0" />
+   </padding>
+</BorderPane>

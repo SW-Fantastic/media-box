@@ -133,4 +133,51 @@
         -fx-border-color:@cardBar;
     }
 
+
+
+}
+
+.files-view {
+
+    -fx-background-color: @background;
+
+    .toolBar {
+        -fx-background-color: @cardBack;
+        -fx-background-radius: 0 0 8 8;
+        -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 8, 0.0, 0, 3);
+        .button {
+
+            -fx-background-color: @noColor;
+            -fx-text-fill: @cardBar;
+
+            &:hover {
+                -fx-effect: dropshadow(three-pass-box, @cardBar, 12, 0.0, 0, 0);
+            }
+
+        }
+    }
+
+    .gridView {
+
+        .grid-cell {
+            -fx-border-radius: 8;
+            -fx-border-style: dashed;
+            -fx-border-width: 1;
+            -fx-border-color: @background;
+            .icon {
+                 -fx-text-fill: @cardBar;
+                 -fx-effect: dropshadow(three-pass-box, @cardBar, 12, 0.0, 0, 0);
+            }
+            &:hover {
+                -fx-border-color: @cardBar;
+            }
+            .selected {
+                -fx-background-radius: 8;
+                -fx-background-color: @cardBack;
+                -fx-text-fill: @cardBar;
+                -fx-effect: dropshadow(three-pass-box, @cardBar, 12, 0.0, 0, 0);
+            }
+        }
+
+    }
 }

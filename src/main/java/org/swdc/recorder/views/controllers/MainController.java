@@ -11,6 +11,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
+import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.swdc.fx.font.FontSize;
 import org.swdc.fx.font.Fontawsome5Service;
@@ -22,6 +23,7 @@ import org.swdc.recorder.core.ffmpeg.source.FFRecordSource;
 import org.swdc.recorder.core.ffmpeg.MediaType;
 import org.swdc.recorder.views.ConfigView;
 import org.swdc.recorder.views.MainView;
+import org.swdc.recorder.views.RecordsView;
 
 import java.io.File;
 import java.net.URL;
@@ -81,6 +83,9 @@ public class MainController extends ViewController<MainView> {
 
     @FXML
     private Slider slVolSecond;
+
+    @Inject
+    private RecordsView recordsView;
 
     @Inject
     private ConfigView configView;
@@ -160,7 +165,24 @@ public class MainController extends ViewController<MainView> {
     @FXML
     public void showConfigView() {
 
-        configView.show();
+        Stage stage = configView.getStage();
+        if (stage.isShowing()) {
+            stage.toFront();
+        } else {
+            stage.show();
+        }
+
+    }
+
+    @FXML
+    public void showRecords() {
+
+        Stage stage = recordsView.getStage();
+        if (stage.isShowing()) {
+            stage.toFront();
+        } else {
+            stage.show();
+        }
 
     }
 
