@@ -82,7 +82,7 @@ public class ConfigController extends ViewController<ConfigView> {
         }
 
         File assetFolder = resources.getAssetsFolder();
-        File dshowLocation = new File(assetFolder.getAbsolutePath() + File.separator + "dshow");
+        File dshowLocation = new File(assetFolder.getAbsolutePath() + File.separator + "platform/dshow");
 
         try {
 
