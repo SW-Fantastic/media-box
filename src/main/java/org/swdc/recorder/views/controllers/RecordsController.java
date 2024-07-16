@@ -13,6 +13,7 @@ import org.swdc.fx.FXResources;
 import org.swdc.fx.view.ViewController;
 import org.swdc.recorder.RecorderConfiguration;
 import org.swdc.recorder.core.FileUtils;
+import org.swdc.recorder.views.EditFolderView;
 import org.swdc.recorder.views.RecordsView;
 
 import java.awt.*;
@@ -84,6 +85,12 @@ public class RecordsController extends ViewController<RecordsView> {
     }
 
     @FXML
+    public void addNewFolder() {
+        getView().getView(EditFolderView.class)
+                .show(currentPath);
+    }
+
+    @FXML
     public void doRefreshFolder() {
         refreshFolder();
     }
@@ -115,6 +122,13 @@ public class RecordsController extends ViewController<RecordsView> {
                         deleted.add(file);
                     }
                 }
+
+                nextPath.clear();
+
+                btnBack.setDisable(previousPath.isEmpty());
+                btnForward.setDisable(nextPath.isEmpty());
+                btnTrash.setDisable(true);
+
                 selected.removeAll(deleted);
                 refreshFolder();
             }

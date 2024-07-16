@@ -20,7 +20,7 @@
                   <Button id="forward" fx:id="btnForward" minHeight="36.0" minWidth="36.0" mnemonicParsing="false" onAction="#folderForward" prefHeight="36.0" prefWidth="36.0" text="Button" />
                   <Button id="refresh" minHeight="36.0" minWidth="36.0" mnemonicParsing="false" onAction="#doRefreshFolder" prefHeight="36.0" prefWidth="36.0" text="Button" />
                   <Separator orientation="VERTICAL" prefHeight="200.0" />
-                  <Button id="addFolder" minHeight="36.0" minWidth="36.0" mnemonicParsing="false" prefHeight="36.0" prefWidth="36.0" text="Button" />
+                  <Button id="addFolder" minHeight="36.0" minWidth="36.0" mnemonicParsing="false" onAction="#addNewFolder" prefHeight="36.0" prefWidth="36.0" text="Button" />
                   <Button id="trashFile" fx:id="btnTrash" layoutX="124.0" layoutY="18.0" minHeight="36.0" minWidth="36.0" mnemonicParsing="false" onAction="#onTrashFiles" prefHeight="36.0" prefWidth="36.0" text="Button" />
                   <Button id="play" layoutX="168.0" layoutY="18.0" minHeight="36.0" minWidth="36.0" mnemonicParsing="false" prefHeight="36.0" prefWidth="36.0" text="Button" />
                </children>
