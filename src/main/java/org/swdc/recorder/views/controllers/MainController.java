@@ -7,10 +7,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Slider;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.swdc.fx.font.FontSize;
@@ -231,6 +228,8 @@ public class MainController extends ViewController<MainView> {
             if (recorder.canRecordAudioMain() || recorder.canRecordVideo()) {
                 if (!recorder.start()) {
                     // failed to start
+                    Alert alert = getView().alert("失败", "视频录制启动失败，未知错误。", Alert.AlertType.ERROR);
+                    alert.showAndWait();
                 } else {
                     setRecIcon("stop");
                     txtFileName.setEditable(false);

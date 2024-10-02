@@ -56,7 +56,6 @@ public class RecordsView extends AbstractView {
         setupButtonIcon(findById("refresh"), "redo-alt");
         setupButtonIcon(findById("addFolder"), "folder-plus");
         setupButtonIcon(findById("trashFile"), "trash-alt");
-        setupButtonIcon(findById("play"), "play");
 
     }
 

@@ -143,7 +143,12 @@ public class FFMpegUtils {
                 );
             } else if (name.equals("x11grab")) {
                 // linux x11grab
-                // TODO 暂时不会写这个。
+                FFRecordSource source = new FFRecordSource();
+                source.setUrl(":0.0");
+                source.setDeviceName("X11Grab(XOrg)");
+                source.setType(MediaType.MediaTypeVideo);
+                source.setFormat(format);
+                sources.add(source);
             }
         }
 

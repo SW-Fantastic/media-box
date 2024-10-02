@@ -9,6 +9,7 @@ import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.input.MouseEvent;
 import org.controlsfx.control.GridView;
+import org.slf4j.Logger;
 import org.swdc.fx.FXResources;
 import org.swdc.fx.view.ViewController;
 import org.swdc.recorder.RecorderConfiguration;
@@ -19,7 +20,6 @@ import org.swdc.recorder.views.RecordsView;
 import java.awt.*;
 import java.io.File;
 import java.net.URL;
-import java.nio.file.Files;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +41,9 @@ public class RecordsController extends ViewController<RecordsView> {
 
     @Inject
     private FXResources resources;
+
+    @Inject
+    private Logger logger;
 
     private ArrayDeque<File> previousPath = new ArrayDeque<>();
 
@@ -184,7 +187,9 @@ public class RecordsController extends ViewController<RecordsView> {
                     Desktop.getDesktop()
                             .open(selectedFile);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.error("Failed to open file: " + selectedFile.getAbsolutePath(), e);
+                    Alert alert = getView().alert("失败", "无法打开指定的文件 - " + e.getClass().getSimpleName(), Alert.AlertType.ERROR);
+                    alert.showAndWait();
                 }
             }
         } else {

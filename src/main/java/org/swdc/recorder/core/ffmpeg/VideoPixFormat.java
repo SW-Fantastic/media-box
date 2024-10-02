@@ -9,6 +9,7 @@ public enum VideoPixFormat {
 
     none(avutil.AV_PIX_FMT_NONE),
     bgra(avutil.AV_PIX_FMT_BGRA),
+    bgr0(avutil.AV_PIX_FMT_BGR0),
     rgb24(avutil.AV_PIX_FMT_RGB24),
     bgr24(avutil.AV_PIX_FMT_BGR24),
     yuv422p(avutil.AV_PIX_FMT_YUV422P),
